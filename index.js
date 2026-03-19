@@ -1,9 +1,56 @@
 import express from "express";
 import cors from "cors";
+import fetch from "node-fetch";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+/* ================================
+   🔍 SCRAPE DO MERCADO LIVRE
+================================ */
+
+app.post("/scrape-product", async (req, res) => {
+  const { url } = req.body;
+
+  try {
+    const response = await fetch(url);
+    const html = await response.text();
+
+    // 🔍 EXTRAÇÃO SIMPLES
+    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+    const priceMatch = html.match(/"price":\s?(\d+\.?\d*)/);
+    const imageMatch = html.match(/"secure_thumbnail":"(.*?)"/);
+
+    const title = titleMatch
+      ? titleMatch[1].replace(" | Mercado Livre", "")
+      : "Produto não encontrado";
+
+    const price = priceMatch
+      ? parseFloat(priceMatch[1])
+      : 0;
+
+    const image = imageMatch
+      ? imageMatch[1].replace(/\\u0026/g, "&")
+      : "";
+
+    res.json({
+      title,
+      price,
+      image
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao extrair dados do produto"
+    });
+  }
+});
+
+/* ================================
+   🌍 ANALISE DE FORNECEDORES
+================================ */
 
 app.post("/analyze-product", async (req, res) => {
   const { title } = req.body;
@@ -11,7 +58,7 @@ app.post("/analyze-product", async (req, res) => {
   try {
     const searchQuery = encodeURIComponent(title);
 
-    // 🔥 preços dinâmicos (melhor que mock fixo)
+    // 🔥 preços dinâmicos
     const basePrice = Math.random() * (20 - 5) + 5;
 
     const suppliers = [
@@ -45,15 +92,24 @@ app.post("/analyze-product", async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Erro ao buscar fornecedores" });
+    res.status(500).json({
+      error: "Erro ao buscar fornecedores"
+    });
   }
 });
+
+/* ================================
+   🚀 ROOT
+================================ */
 
 app.get("/", (req, res) => {
   res.send("API rodando 🚀");
 });
 
-// 🔥 IMPORTANTE PRO RENDER
+/* ================================
+   🚀 SERVER
+================================ */
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
