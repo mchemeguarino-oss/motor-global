@@ -14,10 +14,17 @@ app.post("/scrape-product", async (req, res) => {
   const { url } = req.body;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept": "text/html",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+        "Connection": "keep-alive"
+      }
+    });
+
     const html = await response.text();
 
-    // 🔍 EXTRAÇÃO SIMPLES
     const titleMatch = html.match(/<title>(.*?)<\/title>/i);
     const priceMatch = html.match(/"price":\s?(\d+\.?\d*)/);
     const imageMatch = html.match(/"secure_thumbnail":"(.*?)"/);
