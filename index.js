@@ -16,8 +16,10 @@ app.post("/scrape-product", async (req, res) => {
 
   try {
     browser = await chromium.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    });
+  executablePath: "/usr/bin/chromium-browser",
+  args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  headless: true
+});
 
     const page = await browser.newPage();
 
